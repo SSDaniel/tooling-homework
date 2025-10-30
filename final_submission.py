@@ -217,7 +217,7 @@ def build_dashboard():
 
 
     # --- Carregar e Processar os Dados ---
-    df_csv = load_and_parse_log("/workspaces/tooling-homework/external_data/log_2025-10-29_11-43-52.log", KNOWN_SERIALS)
+    df_csv = load_and_parse_log("external_data/log_2025-10-29_11-43-52.log", KNOWN_SERIALS)
 
     if df_csv.empty:
         df_log = load_and_parse_log("external_data/log_2025-10-29_11-43-52.log", KNOWN_SERIALS)
