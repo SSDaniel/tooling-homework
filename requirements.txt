@@ -1,8 +1,7 @@
-pandas
+streamlit 
+pandas 
+plotly
+plotly[express] 
+re 
+datetime 
 numpy
-matplotlib
-seaborn
-workalendar
-scikit-learn
-xgboost
-streamlit
