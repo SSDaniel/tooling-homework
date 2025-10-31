@@ -327,11 +327,11 @@ def build_dashboard():
 
 
     # --- Carregar e Processar os Dados (IDÊNTICO) ---
-    df_power_csv, df_status_csv, df_site_csv, df_profile_csv = load_and_parse_log("log_2025-10-29_11-43-52.csv", KNOWN_SERIALS)
-    df_power_log, df_status_log, df_site_log, df_profile_log = load_and_parse_log("external_data/log_2025-10-29_11-43-52.log", KNOWN_SERIALS)
+    df_power_csv, df_status_csv, df_site_csv, df_profile_csv = load_and_parse_log("logs_combinados_cronologicamente", KNOWN_SERIALS)
+    df_power_log, df_status_log, df_site_log, df_profile_log = load_and_parse_log("external_data/logs_combinados_cronologicamente", KNOWN_SERIALS)
 
     if df_power_csv.empty and df_site_csv.empty and df_power_log.empty and df_site_log.empty:
-        st.error("Erro: Não foi possível encontrar 'log_2025-10-29_11-43-52.csv' ou 'log_2025-10-29_11-43-52.log'.")
+        st.error("Erro: Não foi possível encontrar 'logs_combinados_cronologicamente' ou 'logs_combinados_cronologicamente'.")
         st.stop()
         
     df_power_raw = pd.concat([df_power_csv, df_power_log])
