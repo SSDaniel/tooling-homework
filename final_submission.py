@@ -609,7 +609,7 @@ def build_dashboard():
     st.markdown("<br>", unsafe_allow_html=True)
     col_opts = st.columns([1,1])
     show_raw = col_opts[0].checkbox("Mostrar dados brutos extraídos do log", value=False, key="show_raw_checkbox")
-    show_disconnects = col_opts[1].checkbox("Mostrar Quant. de Desconexão", value=False, key="show_disconnects_checkbox")
+    show_disconnects = col_opts[1].checkbox("Mostrar Quant. de Desconexões", value=False, key="show_disconnects_checkbox")
     if show_raw:
         st.subheader("Dados Extraídos (Processados para Plotagem)")
         st.dataframe(df_min)
