@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import plotly.graph_objs as go
 import plotly.express as px
-import re 
-from datetime import datetime, timedelta # timedelta é usado, mas pd.Timedelta é usado na comparação
-import numpy as np 
+import re
+from datetime import datetime, timedelta
+import numpy as np
+import os
 
 # --- Configuração da Página (DEVE SER O 1º COMANDO STREAMLIT) ---
 st.set_page_config(layout="wide")
@@ -20,101 +22,84 @@ CHARGER_MAX_POWER = {
 KNOWN_SERIALS = set(CHARGER_MAX_POWER.keys())
 
 
-# --- Função de Parsing do Log (IDÊNTICA AO SEU CÓDIGO) ---
-@st.cache_data 
-def load_and_parse_log(log_file, known_serials):
-    """
-    Lê o arquivo de log e extrai 4 tipos de dados:
-    1. Potência (de [STATE UPDATE])
-    2. Status (de [FROM CHARGER]...StatusNotification)
-    3. Potência do Site (de [CONTROL]...Consumo Total Site)
-    4. Eventos SetProfile (para as estrelas)
-    """
-    # 1. Padrão para potência do carregador
-    charger_pattern = re.compile(
-        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - INFO - \[STATE UPDATE (.*?)\]: Potência atual: (.*?)W"
-    )
-    # 2. Padrão para consumo total do site
-    site_pattern = re.compile(
-        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - INFO - \[CONTROL\].*?Consumo Total Site: (.*?)W"
-    )
-    # 3. Padrão para eventos "Setchargerprofile"
-    setprofile_pattern = re.compile(
-        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*?\[.*?(\d{12,}).*?\].*?Setchargerprofile", re.IGNORECASE
-    )
-    # 4. NOVO PADRÃO: Eventos de Status
-    statusnotif_re = re.compile(
-        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*\[FROM CHARGER ([^]]+)\]:.*StatusNotification.*\"status\"\s*:\s*\"([A-Za-z]+)\"", re.IGNORECASE
-    )
+@st.cache_data
+def parse_log(log_file):
+    chargers = {}
+    status_events = {}
+    control_events = []
+    all_times = set()
+    statusnotif_re = re.compile(r'\[FROM CHARGER ([^]]+)\]:.*StatusNotification.*"status"\s*:\s*"([A-Za-z]+)"')
+    power_stateupdate_re = re.compile(r'\[STATE UPDATE ([^]]+)\]: Potência atual: ([\d.]+)W')
+    control_applied_re = re.compile(r"\[CONTROL\] SOBRECARGA!.*Aplicando balanceamento\.")
+    site_power_re = re.compile(r'Potência total do site atualizada: ([\d.]+)W')
+    site_power_events = []
+    with open(log_file, encoding="utf-8") as f:
+        for line in f:
+            try:
+                ts_str = line.split(" - ")[0]
+                timestamp = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
+            except Exception:
+                continue
+            all_times.add(timestamp)
+            m_statusnotif = statusnotif_re.search(line)
+            if m_statusnotif:
+                cp_id = m_statusnotif.group(1).strip()
+                status = m_statusnotif.group(2)
+                if cp_id not in status_events:
+                    status_events[cp_id] = []
+                status_events[cp_id].append({
+                    "timestamp": timestamp,
+                    "status": status
+                })
+            m_power = power_stateupdate_re.search(line)
+            if m_power:
+                cp_id = m_power.group(1).strip()
+                power = float(m_power.group(2))
+                if cp_id not in chargers:
+                    chargers[cp_id] = []
+                chargers[cp_id].append({
+                    "timestamp": timestamp,
+                    "power": power
+                })
+            m_site_power = site_power_re.search(line)
+            if m_site_power:
+                site_power = float(m_site_power.group(1))
+                site_power_events.append({
+                    "timestamp": timestamp,
+                    "power": site_power
+                })
+            if control_applied_re.search(line):
+                control_events.append(timestamp)
+    def is_serial(cp_id):
+        return cp_id and not cp_id.startswith("EXTERNAL SERVER") and cp_id.replace(' ', '').isalnum()
+    serial_chargers = {cp_id: events for cp_id, events in chargers.items() if is_serial(cp_id)}
+    serial_status = {cp_id: events for cp_id, events in status_events.items() if is_serial(cp_id)}
+    return serial_chargers, serial_status, control_events, sorted(all_times), site_power_events
 
-    power_data = []
-    status_data = []
-    site_data = []
-    profile_data = []
-    
-    try:
-        with open(log_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                # 1. Potência do Carregador
-                charger_match = charger_pattern.search(line)
-                if charger_match:
-                    timestamp, serial, power = charger_match.groups()
-                    if serial in known_serials:
-                        power_data.append({
-                            "timestamp": timestamp,
-                            "serial_number": serial,
-                            "potencia_W": float(power)
-                        })
-                    continue 
-
-                # 2. Potência do Site
-                site_match = site_pattern.search(line)
-                if site_match:
-                    timestamp, power = site_match.groups()
-                    site_data.append({
-                        "timestamp": timestamp,
-                        "serial_number": "Consumo Total Site", 
-                        "potencia_W": float(power),
-                        "tipo": "Site"
-                    })
+@st.cache_data
+def get_disconnects(log_file):
+    disconnect_re = re.compile(r"\[Local Server\] Cliente '([^']+)' desconectado e removido\." )
+    disconnects = {}
+    with open(log_file, encoding="utf-8") as f:
+        for line in f:
+            m = disconnect_re.search(line)
+            if m:
+                cp_id = m.group(1)
+                try:
+                    ts_str = line.split(" - ")[0]
+                    timestamp = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
+                    day = timestamp.date()
+                    if cp_id not in disconnects:
+                        disconnects[cp_id] = {}
+                    disconnects[cp_id][day] = disconnects[cp_id].get(day, 0) + 1
+                except Exception:
                     continue
-                
-                # 3. Eventos SetProfile
-                profile_match = setprofile_pattern.search(line)
-                if profile_match:
-                    timestamp, serial = profile_match.groups()
-                    if serial in known_serials:
-                        profile_data.append({
-                            "timestamp": timestamp,
-                            "serial_number": serial,
-                            "tipo": "SetProfile"
-                        })
-                    continue
-                
-                # 4. Eventos de Status
-                status_match = statusnotif_re.search(line)
-                if status_match:
-                    timestamp, serial, status = status_match.groups()
-                    if serial in known_serials:
-                        status_data.append({
-                            "timestamp": timestamp,
-                            "serial_number": serial,
-                            "status": status
-                        })
-    
-    except FileNotFoundError:
-        pass
-    except Exception as e:
-        st.error(f"Erro ao processar o arquivo de log '{log_file}': {e}")
-        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-    return pd.DataFrame(power_data), pd.DataFrame(status_data), pd.DataFrame(site_data), pd.DataFrame(profile_data)
+    return disconnects
 
 
 # --- FUNÇÃO DE VERIFICAÇÃO DE SENHA (IDÊNTICA) ---
 def check_password():
-    """Retorna True se o usuário digitar a senha correta, False caso contrário."""
-    
+
     try:
         correct_password = st.secrets["passwords"]["admin_password"]
     except KeyError:
@@ -227,6 +212,7 @@ def process_data_no_ramps(df_power_raw, df_status_raw, all_timestamps, selected_
 
 # --- FUNÇÃO PRINCIPAL QUE CONSTRÓI O DASHBOARD (COM CORREÇÕES NA LÓGICA DE DADOS) ---
 def build_dashboard():
+    # (Removido: uso de show_disconnects antes da definição)
 
     # --- CSS (Cole o seu CSS aqui, mantido idêntico) ---
     st.markdown("""
@@ -327,19 +313,34 @@ def build_dashboard():
 
 
     # --- Carregar e Processar os Dados (IDÊNTICO) ---
-    df_power_csv, df_status_csv, df_site_csv, df_profile_csv = load_and_parse_log("logs_combinados_cronologicamente.log", KNOWN_SERIALS)
-    df_power_log, df_status_log, df_site_log, df_profile_log = load_and_parse_log("external_data/logs_combinados_cronologicamente.log", KNOWN_SERIALS)
-
-    if df_power_csv.empty and df_site_csv.empty and df_power_log.empty and df_site_log.empty:
-        st.error("Erro: Não foi possível encontrar 'logs_combinados_cronologicamente' ou 'logs_combinados_cronologicamente'.")
-        st.stop()
-        
-    df_power_raw = pd.concat([df_power_csv, df_power_log])
-    df_status_raw = pd.concat([df_status_csv, df_status_log])
-    df_site_raw = pd.concat([df_site_csv, df_site_log])
-    df_profile_raw = pd.concat([df_profile_csv, df_profile_log])
-
-    if df_power_raw.empty and df_site_raw.empty:
+    # Usar a lógica do analise_log_carregadores.py para parsing
+    log_path = "external_data/logs_combinados_cronologicamente1.log"
+    chargers, status_events, control_events, all_times, site_power_events = parse_log(log_path)
+    # Montar DataFrames para compatibilidade com o restante do dashboard
+    all_power = []
+    all_status = []
+    for cp_id, events in chargers.items():
+        for e in events:
+            all_power.append({"timestamp": e["timestamp"], "serial_number": cp_id, "potencia_W": e["power"]})
+    for cp_id, events in status_events.items():
+        for e in events:
+            all_status.append({"timestamp": e["timestamp"], "serial_number": cp_id, "status": e["status"]})
+    df_power_raw = pd.DataFrame(all_power)
+    df_status_raw = pd.DataFrame(all_status)
+    # Adiciona colunas de data/hora
+    if not df_power_raw.empty:
+        df_power_raw["date"] = df_power_raw["timestamp"].dt.date
+        df_power_raw["hour"] = df_power_raw["timestamp"].dt.hour
+        df_power_raw["potencia_kW"] = df_power_raw["potencia_W"] / 1000.0
+    if not df_status_raw.empty:
+        df_status_raw["date"] = df_status_raw["timestamp"].dt.date
+        df_status_raw["hour"] = df_status_raw["timestamp"].dt.hour
+    min_date = df_power_raw["date"].min() if not df_power_raw.empty else datetime.today().date()
+    max_date = df_power_raw["date"].max() if not df_power_raw.empty else datetime.today().date()
+    # df_site_raw e df_profile_raw mantidos vazios para compatibilidade
+    df_site_raw = pd.DataFrame()
+    df_profile_raw = pd.DataFrame()
+    if df_power_raw.empty:
         st.warning("O arquivo de log foi lido, mas nenhum dado de potência foi encontrado.")
         st.stop()
 
@@ -348,16 +349,18 @@ def build_dashboard():
     # Converte timestamps e ADICIONA COLUNAS DE FILTRO (date, hour) imediatamente
     for df in [df_power_raw, df_status_raw, df_site_raw, df_profile_raw]:
         if not df.empty:
-            df['timestamp'] = df['timestamp'].str.replace(',', '.', regex=False)
-            try:
-                df['timestamp'] = pd.to_datetime(df['timestamp'], format='mixed')
-                # Adiciona as colunas 'date' e 'hour' ao DataFrame original
-                df['date'] = df['timestamp'].dt.date
-                df['hour'] = df['timestamp'].dt.hour
-                all_dfs.append(df) # Adiciona à lista SÓ se a conversão funcionou
-            except ValueError as e:
-                st.error(f"Erro ao converter datas mesmo após a correção: {e}")
-                st.stop()
+            # Se a coluna já for datetime, não faz replace nem converte
+            if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
+                df['timestamp'] = df['timestamp'].str.replace(',', '.', regex=False)
+                try:
+                    df['timestamp'] = pd.to_datetime(df['timestamp'], format='mixed')
+                except ValueError as e:
+                    st.error(f"Erro ao converter datas mesmo após a correção: {e}")
+                    st.stop()
+            # Adiciona as colunas 'date' e 'hour' ao DataFrame original
+            df['date'] = df['timestamp'].dt.date
+            df['hour'] = df['timestamp'].dt.hour
+            all_dfs.append(df) # Adiciona à lista SÓ se a conversão funcionou
     
     if not all_dfs:
         st.warning("Nenhum dado com timestamp válido foi encontrado nos logs.")
@@ -448,114 +451,180 @@ def build_dashboard():
         )
         df_profile_filtered = df_profile_raw[profile_time_filter & df_profile_raw['serial_number'].isin(selected_serials)]
 
-    # 5. Pega TODOS os timestamps únicos dos eventos de status e potência FILTRADOS (IDÊNTICO)
-    all_timestamps_filtered = sorted(
-        pd.concat([df_power_filtered['timestamp'], df_status_filtered['timestamp']]).unique()
-    )
-    
-    # 6. CHAMA A NOVA FUNÇÃO DE PROCESSAMENTO (IDÊNTICO)
-    if not all_timestamps_filtered:
-        df_chargers_processed = pd.DataFrame()
-    else:
-        df_chargers_processed = process_data_no_ramps(
-            df_power_filtered, 
-            df_status_filtered, 
-            all_timestamps_filtered, 
-            selected_serials
-        )
-
-    # 7. Cria o dataframe final para plotagem (IDÊNTICO)
-    df_plot = pd.concat([df_chargers_processed, df_site_filtered])
-
-    # 8. Processa os eventos "SetProfile" (Estrelas) (IDÊNTICO)
-    df_events_with_power = pd.DataFrame()
-    if not df_profile_filtered.empty and not df_chargers_processed.empty:
-        df_events_with_power = pd.merge_asof(
-            df_profile_filtered.sort_values('timestamp'),
-            df_chargers_processed.sort_values('timestamp').dropna(subset=['potencia_kW']),
-            on='timestamp',
-            by='serial_number',
-            direction='nearest' 
-        )
-
-    # --- Gráfico Interativo (Usando Plotly) (IDÊNTICO) ---
-    st.markdown("<h2 style='text-align: center;'>Potência ao Longo do Tempo</h2>", unsafe_allow_html=True)
-
-    if df_plot.empty or len(df_plot) < 2:
+    # --- NOVA LÓGICA DE GRÁFICO (analise_log_carregadores.py) ---
+    # 1. Preparar dados minuto a minuto, aplicando lógica de status/potência
+    if df_power_filtered.empty and df_status_filtered.empty:
         st.warning("Não há dados suficientes para os filtros selecionados.")
+        return
+    cp_ids = selected_serials
+    from datetime import timedelta  # Garante que timedelta está disponível
+    # Gera apenas os minutos que realmente existem nos dados filtrados
+    timestamps_power = df_power_filtered['timestamp'] if not df_power_filtered.empty else pd.Series(dtype='datetime64[ns]')
+    timestamps_status = df_status_filtered['timestamp'] if not df_status_filtered.empty else pd.Series(dtype='datetime64[ns]')
+    if not timestamps_power.empty or not timestamps_status.empty:
+        min_time = min(timestamps_power.min(), timestamps_status.min()) if not timestamps_power.empty and not timestamps_status.empty else (timestamps_power.min() if not timestamps_power.empty else timestamps_status.min())
+        max_time = max(timestamps_power.max(), timestamps_status.max()) if not timestamps_power.empty and not timestamps_status.empty else (timestamps_power.max() if not timestamps_power.empty else timestamps_status.max())
+        all_minutes = pd.date_range(start=min_time.floor('min'), end=max_time.floor('min'), freq='T')
     else:
-        # 1. Criar o gráfico de LINHAS principal
-        fig = px.line(
-            df_plot,
-            x="timestamp",
-            y="potencia_kW",
-            color="serial_number",
-            template="plotly_white", 
-            labels={ 
-                "timestamp": "Data e Hora",
-                "potencia_kW": "Potência (kW)",
-                "serial_number": "Série / Medição"
-            },
-            hover_data={ 
-                "potencia_kW": ":.2f", 
-                "timestamp": "|%Y-%m-%d %H:%M" 
-            }
+        all_minutes = pd.Series(dtype='datetime64[ns]')
+    # Junta todos os timestamps presentes nos dados filtrados
+    times_day = pd.concat([df_power_filtered['timestamp'], df_status_filtered['timestamp']]).sort_values().unique()
+    # Usa todos os minutos do intervalo, não só os presentes nos dados
+    from datetime import timedelta
+    TOLERANCIA_MINUTOS = 2
+    status_times = {cp_id: df_status_filtered[df_status_filtered['serial_number'] == cp_id].sort_values('timestamp').to_dict('records') for cp_id in cp_ids}
+    power_times = {cp_id: df_power_filtered[df_power_filtered['serial_number'] == cp_id].sort_values('timestamp').to_dict('records') for cp_id in cp_ids}
+    data = []
+    # Para cada minuto, reinicializa os índices para cada carregador
+    for t in all_minutes:
+        row = {"timestamp": t}
+        total = 0
+        for cp_id in cp_ids:
+            statuses = status_times.get(cp_id, [])
+            powers = power_times.get(cp_id, [])
+            # Encontra o último status antes ou igual ao minuto atual
+            last_status = "Available"
+            for s in statuses:
+                if s["timestamp"] <= t:
+                    last_status = s["status"]
+                else:
+                    break
+            # Encontra o último valor de potência antes ou igual ao minuto atual
+            last_power = 0
+            last_power_time = None
+            for p in powers:
+                if p["timestamp"] <= t:
+                    last_power = p["potencia_W"]
+                    last_power_time = p["timestamp"]
+                else:
+                    break
+            # Lógica: Se status não for 'Charging', mas houve evento de potência nos últimos X minutos, considera que está carregando
+            carregando = False
+            if last_status == 'Charging':
+                carregando = True
+            elif last_power_time is not None and (t - last_power_time) <= timedelta(minutes=TOLERANCIA_MINUTOS):
+                carregando = True
+            if not carregando:
+                last_power = 0
+            row[cp_id] = last_power
+            total += last_power
+        row['total_power'] = total
+        data.append(row)
+    df = pd.DataFrame(data)
+    # Agrupa por minuto
+    if not df.empty:
+        df['minute'] = df['timestamp'].dt.floor('min')
+        agg_dict = {cp_id: 'mean' for cp_id in cp_ids}
+        agg_dict['total_power'] = 'mean'
+        df_min = df.groupby('minute').agg(agg_dict).reset_index().rename(columns={'minute': 'timestamp'})
+    else:
+        df_min = pd.DataFrame()
+    # Gráfico dos carregadores individuais
+    st.markdown("<h2 style='text-align: center;'>Potência ao Longo do Tempo</h2>", unsafe_allow_html=True)
+    if df_min.empty or len(df_min) < 2:
+        st.warning("Não há dados suficientes para os filtros selecionados.")
+        return
+    fig = go.Figure()
+    custom_names = {
+        "0000324070000979": "0000324070000979 - 30kW (A)",
+        "0000324070001003": "0000324070001003 - 30kW (B)",
+        "125020001113": "125020001113 - 7.5kW (A)",
+        "125020001122": "125020001122 - 7.5kW (B)",
+        "125020001148": "125020001148 - 7.5kW (C)",
+        "125020001128": "125020001128 - 7.5kW (D)"
+    }
+    for cp_id in cp_ids:
+        nome_legenda = custom_names.get(cp_id, str(cp_id))
+        fig.add_trace(go.Scatter(
+            x=df_min['timestamp'],
+            y=df_min[cp_id],
+            mode='lines+markers',
+            name=nome_legenda,
+            hovertemplate=f"Carregador: {nome_legenda}<br>Horário: %{{x}}<br>Potência: %{{y}} W"
+        ))
+    # Gráfico da soma total dos carregadores
+    fig.add_trace(go.Scatter(
+        x=df_min['timestamp'],
+        y=df_min['total_power'],
+        mode='lines',
+        name='Potência Ativa Total Carregadores',
+        line=dict(color='black', width=3, dash='dash'),
+        hovertemplate='Total Carregadores<br>Horário: %{x}<br>Potência: %{y} W'
+    ))
+    # Adiciona traço do consumo total do site
+    if site_power_events:
+        df_site_power = pd.DataFrame(site_power_events)
+        # Adiciona colunas de data/hora para filtrar igual aos outros
+        df_site_power['date'] = df_site_power['timestamp'].dt.date
+        df_site_power['hour'] = df_site_power['timestamp'].dt.hour
+        site_time_filter = (
+            (df_site_power['date'] == selected_date) &
+            (df_site_power['hour'].between(selected_hour_start, selected_hour_end))
         )
-        
-        # 2. Adicionar a camada de ESTRELAS
-        if not df_events_with_power.empty:
-            fig_events = px.scatter(
-                df_events_with_power,
-                x="timestamp",
-                y="potencia_kW", 
-                color="serial_number"
-            )
-            
-            fig_events.update_traces(
-                marker=dict(symbol='star', size=15), 
-                showlegend=False 
-            )
-            
-            for trace in fig_events.data:
-                fig.add_trace(trace)
+        df_site_power_filtered = df_site_power[site_time_filter]
+        # Agrupa por minuto (média por minuto)
+        if not df_site_power_filtered.empty:
+            df_site_power_filtered['minute'] = df_site_power_filtered['timestamp'].dt.floor('min')
+            df_site_power_min = df_site_power_filtered.groupby('minute')['power'].mean().reset_index()
+            fig.add_trace(go.Scatter(
+                x=df_site_power_min['minute'],
+                y=df_site_power_min['power'],
+                mode='lines',
+                name='Consumo Total Site',
+                line=dict(color='blue', width=2, dash='dot'),
+                hovertemplate='Consumo Total Site<br>Horário: %{x}<br>Potência: %{y} W'
+            ))
+    # Linha de controle de demanda
+    fig.add_shape(
+        type='line',
+        x0=df_min['timestamp'].min(),
+        y0=60000,
+        x1=df_min['timestamp'].max(),
+        y1=60000,
+        line=dict(color='red', width=2, dash='dot'),
+    )
+    fig.add_trace(go.Scatter(
+        x=[df_min['timestamp'].min(), df_min['timestamp'].max()],
+        y=[60000, 60000],
+        mode='lines',
+        name='Limite Controle de Demanda',
+        line=dict(color='red', width=2, dash='dot'),
+        showlegend=True
+    ))
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font_color="black",
+        legend_title_font_color="black",
+        legend_font_color="black",
+        xaxis=dict(showgrid=True, gridcolor="lightgray"),
+        yaxis=dict(showgrid=True, gridcolor="lightgray"),
+        hovermode="x unified"
+    )
+    st.plotly_chart(fig, use_container_width=True, theme=None)
 
-        # 3. Adicionar linha vermelha fixa
-        fig.add_hline(
-            y=60, 
-            line_dash="dash", 
-            line_color="red", 
-            annotation_text="Limite 60 kW", 
-            annotation_position="bottom right"
-        )
 
-        # 4. Aplicar o layout (fundo branco, etc.)
-        fig.update_layout(
-            plot_bgcolor="white",    
-            paper_bgcolor="white",   
-            font_color="black",      
-            legend_title_font_color="black",
-            legend_font_color="black",
-            xaxis=dict(showgrid=True, gridcolor="lightgray"),
-            yaxis=dict(showgrid=True, gridcolor="lightgray")
-        )
-        
-        fig.update_traces(mode='lines') 
-
-        # 5. Renderizar o gráfico
-        st.plotly_chart(fig, use_container_width=True, theme=None) 
-
-
-    # --- Mostrar Dados Brutos (Opcional) (IDÊNTICO) ---
-    if st.checkbox("Mostrar dados brutos extraídos do log"):
+    # --- Caixas de seleção abaixo do gráfico ---
+    # Caixas de seleção abaixo do gráfico (declaradas após todas variáveis)
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_opts = st.columns([1,1])
+    show_raw = col_opts[0].checkbox("Mostrar dados brutos extraídos do log", value=False, key="show_raw_checkbox")
+    show_disconnects = col_opts[1].checkbox("Mostrar Quant. de Desconexão", value=False, key="show_disconnects_checkbox")
+    if show_raw:
         st.subheader("Dados Extraídos (Processados para Plotagem)")
-        st.dataframe(df_plot)
-        if not df_events_with_power.empty:
-            st.subheader("Dados Extraídos (Eventos - Estrelas)")
-            st.dataframe(df_events_with_power)
+        st.dataframe(df_min)
+    if show_disconnects:
+        disconnects = get_disconnects("external_data/logs_combinados_cronologicamente1.log")
+        rows = []
+        for cp_id, days in disconnects.items():
+            count = days.get(selected_date, 0)
+            rows.append({"Carregador": cp_id, "Desconexões": count})
+        df_disc = pd.DataFrame(rows)
+        st.markdown("## Quantidade de Desconexões por Carregador")
+        st.dataframe(df_disc)
 
 
 # --- LÓGICA DE EXECUÇÃO PRINCIPAL (O "PORTÃO") (IDÊNTICA) ---
 # 1. Verifica a senha
 if check_password():
-    # 2. Se a senha for correta, constrói o dashboard
     build_dashboard()
