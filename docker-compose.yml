@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    # 'build: .' diz para ele usar o Dockerfile na pasta atual
+    build: .
+    
+    # Mapeia a porta 8502 da sua máquina para a 8502 do contêiner
+    ports:
+      - "8502:8502"
+      
+    # ESTA É A MÁGICA:
+    # 'volumes' mapeia sua pasta local ('.') para a pasta /app no contêiner.
+    # Qualquer mudança no seu PC é refletida IMEDIATAMENTE no contêiner.
+    volumes:
+      - .:/app

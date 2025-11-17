@@ -6,6 +6,8 @@ import re
 from datetime import datetime, timedelta
 import numpy as np
 import os
+from html import escape
+from collections import deque
 
 # --- Configuração da Página (DEVE SER O 1º COMANDO STREAMLIT) ---
 st.set_page_config(layout="wide")
@@ -78,22 +80,64 @@ def parse_log(log_file):
 
 @st.cache_data
 def get_disconnects(log_file):
-    disconnect_re = re.compile(r"\[Local Server\] Cliente '([^']+)' desconectado e removido\." )
-    disconnects = {}
+    """
+    Varre o log e retorna um dicionário por carregador contendo contagens de
+    desconexões locais e desconexões externas (servidor externo).
+
+    Regras:
+      - Conta como desconexão local: [Local Server] Cliente ... desconectado e removido.
+      - Conta como desconexão externa: [External Client] Conexão com servidor externo ... perdida
+      - Se uma desconexão local for seguida (até 60s) por eventos de gateway/external/cancel, conta apenas como uma desconexão (ignora as consequências).
+      - Não conta como desconexão: gateway, cancelada, external_disconnected (se vier logo após external_lost)
+    """
+    import re
+    from datetime import datetime
+    local_re = re.compile(r"\[Local Server\] Cliente '([^']+)' desconectado e removido\.")
+    external_conn_lost_re = re.compile(r"\[External Client\] Conexão com servidor externo para '([^']+)' perdida")
+
+    events = []  # (timestamp, cp_id, type, line)
     with open(log_file, encoding="utf-8") as f:
         for line in f:
-            m = disconnect_re.search(line)
+            try:
+                ts_str = line.split(" - ")[0]
+                timestamp = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
+            except Exception:
+                continue
+            m = local_re.search(line)
             if m:
                 cp_id = m.group(1)
-                try:
-                    ts_str = line.split(" - ")[0]
-                    timestamp = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
-                    day = timestamp.date()
-                    if cp_id not in disconnects:
-                        disconnects[cp_id] = {}
-                    disconnects[cp_id][day] = disconnects[cp_id].get(day, 0) + 1
-                except Exception:
-                    continue
+                events.append((timestamp, cp_id, 'local', line))
+                continue
+            m = external_conn_lost_re.search(line)
+            if m:
+                cp_id = m.group(1)
+                events.append((timestamp, cp_id, 'external_lost', line))
+                continue
+    # ordenar eventos por tempo
+    events.sort(key=lambda x: x[0])
+
+    disconnects = {}
+    WINDOW = 60  # segundos
+    for cp_id in set(e[1] for e in events):
+        disconnects[cp_id] = {'local': {}, 'external': {}, 'events': []}
+        evs = [e for e in events if e[1] == cp_id]
+        last_local = None
+        last_external = None
+        for ts, _, ev_type, line in evs:
+            disconnects[cp_id]['events'].append((ts, ev_type, line))
+            day = ts.date()
+            if ev_type == 'local':
+                # só conta se não houver outro local nos últimos WINDOW segundos
+                if last_local is None or (ts - last_local).total_seconds() > WINDOW:
+                    disconnects[cp_id]['local'][day] = disconnects[cp_id]['local'].get(day, 0) + 1
+                    last_local = ts
+                    last_external = None  # reseta janela externa
+            elif ev_type == 'external_lost':
+                # só conta se não houver local nos últimos WINDOW segundos
+                if last_local is None or (ts - last_local).total_seconds() > WINDOW:
+                    if last_external is None or (ts - last_external).total_seconds() > WINDOW:
+                        disconnects[cp_id]['external'][day] = disconnects[cp_id]['external'].get(day, 0) + 1
+                        last_external = ts
     return disconnects
 
 
@@ -212,109 +256,12 @@ def process_data_no_ramps(df_power_raw, df_status_raw, all_timestamps, selected_
 
 # --- FUNÇÃO PRINCIPAL QUE CONSTRÓI O DASHBOARD (COM CORREÇÕES NA LÓGICA DE DADOS) ---
 def build_dashboard():
-    # (Removido: uso de show_disconnects antes da definição)
-
-    # --- CSS (Cole o seu CSS aqui, mantido idêntico) ---
-    st.markdown("""
-    <style>
-            
-    input, select, textarea {
-        background-color: white !important;
-        color: black !important;
-    }
-
-    /* Deixar a barra superior branca */
-    [data-testid="stHeader"] {
-        background-color: white !important;
-        color: black !important;
-    }
-
-    /* Esconder a sombra escura sob a barra */
-    [data-testid="stHeader"]::before {
-        background: none !important;
-    }
-
-    /* Ícones e botões da barra (menu, etc.) em preto */
-    [data-testid="stHeader"] svg, 
-    [data-testid="stHeader"] button {
-        color: black !important;
-        fill: black !important;
-    }
-                        
-
-    [data-testid="stHeader"] {
-        box-shadow: none !important;
-        border-bottom: 1px solid #ddd !important;
-    }
-
-            
-    /* Cor de fundo principal (branca) */
-    [data-testid="stAppViewContainer"] {
-        background-color: #FFFFFF;
-    }
-    /* Cor de fundo da sidebar (azul claro) */
-    [data-testid="stSidebar"] {
-        background-color: #DCDCDC ;
-    }
-
-    /* Força todo o texto para PRETO */
-    [data-testid="stAppViewContainer"] *, [data-testid="stSidebar"] * {
-        color: black !important;
-    }
-    [data-testid="stCheckbox"] label {
-        color: black !important;
-    }
-
-    /* Centralizar o Título Principal (h1) */
-    [data-testid="stAppViewContainer"] h1 {
-        text-align: center;
-    }
-
-    /* --- CORREÇÃO: Forçar widgets (calendário, selectbox) para o tema claro --- */
-
-    /* Caixa principal do Seletor de Data (Calendário) */
-    [data-testid="stDateInput"] div[data-baseweb="input"] input {
-        background-color: white !important;
-        color: black !important;
-        border-color: lightgray !important;
-    }
-
-    /* Selectbox (mantém branco mesmo com tema escuro) */
-    [data-testid="stSelectbox"] div[data-baseweb="select"],
-    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-    [data-testid="stSelectbox"] div[data-baseweb="select"] input {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid lightgray !important;
-    }
-
-    /* O menu suspenso que aparece ao clicar */
-    div[data-baseweb="popover"] {
-        background-color: white !important;
-        color: black !important;
-    }
-    div[data-baseweb="option"] {
-        background-color: white !important;
-        color: black !important;
-    }
-    div[data-baseweb="option"]:hover {
-        background-color: #f0f0f0 !important;
-    }
-
-    /* Botões (como < >) dentro dos pop-ups */
-    div[data-baseweb="popover"] button {
-        background-color: lightgray !important;
-    }
-
-    </style>
-    """, unsafe_allow_html=True) 
-    
-    st.title("Dashboard Interativo de Potência dos Carregadores ⚡")
-
-
-    # --- Carregar e Processar os Dados (IDÊNTICO) ---
-    # Usar a lógica do analise_log_carregadores.py para parsing
-    log_path = "external_data/logs_combinados_cronologicamente1.log"
+    # Inicializa DataFrames auxiliares vazios para evitar erro
+    df_site_raw = pd.DataFrame()
+    df_profile_raw = pd.DataFrame()
+    df_power_filtered = pd.DataFrame()
+    # --- Carregar e Processar os Dados (antes de qualquer uso de min_date/max_date) ---
+    log_path = "external_data/logs_combinados.log"
     chargers, status_events, control_events, all_times, site_power_events = parse_log(log_path)
     # Montar DataFrames para compatibilidade com o restante do dashboard
     all_power = []
@@ -335,47 +282,125 @@ def build_dashboard():
     if not df_status_raw.empty:
         df_status_raw["date"] = df_status_raw["timestamp"].dt.date
         df_status_raw["hour"] = df_status_raw["timestamp"].dt.hour
-    min_date = df_power_raw["date"].min() if not df_power_raw.empty else datetime.today().date()
-    max_date = df_power_raw["date"].max() if not df_power_raw.empty else datetime.today().date()
-    # df_site_raw e df_profile_raw mantidos vazios para compatibilidade
-    df_site_raw = pd.DataFrame()
-    df_profile_raw = pd.DataFrame()
-    if df_power_raw.empty:
-        st.warning("O arquivo de log foi lido, mas nenhum dado de potência foi encontrado.")
-        st.stop()
+    # Definir min_date e max_date — calcular o intervalo combinado de todas as fontes conhecidas
+    candidate_dates = []
+    if not df_power_raw.empty and 'date' in df_power_raw.columns:
+        candidate_dates.append(df_power_raw["date"].min())
+        candidate_dates.append(df_power_raw["date"].max())
+    # all_times vem de parse_log() (lista ordenada de datetimes)
+    if 'all_times' in locals() and all_times:
+        candidate_dates.append(all_times[0].date())
+        candidate_dates.append(all_times[-1].date())
+    if candidate_dates:
+        min_date = min(candidate_dates)
+        max_date = max(candidate_dates)
+    else:
+        today = datetime.today().date()
+        min_date = today
+        max_date = today
+    # (Removido: uso de show_disconnects antes da definição)
 
-    # --- CORREÇÃO 1: Processamento de datas e adição de colunas movidos para aqui ---
-    all_dfs = []
-    # Converte timestamps e ADICIONA COLUNAS DE FILTRO (date, hour) imediatamente
-    for df in [df_power_raw, df_status_raw, df_site_raw, df_profile_raw]:
-        if not df.empty:
-            # Se a coluna já for datetime, não faz replace nem converte
-            if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
-                df['timestamp'] = df['timestamp'].str.replace(',', '.', regex=False)
-                try:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'], format='mixed')
-                except ValueError as e:
-                    st.error(f"Erro ao converter datas mesmo após a correção: {e}")
-                    st.stop()
-            # Adiciona as colunas 'date' e 'hour' ao DataFrame original
-            df['date'] = df['timestamp'].dt.date
-            df['hour'] = df['timestamp'].dt.hour
-            all_dfs.append(df) # Adiciona à lista SÓ se a conversão funcionou
+    # --- CSS (Cole o seu CSS aqui, mantido idêntico) ---
+
+    # --- CSS (Cole o seu CSS aqui, mantido idêntico) ---
+    st.markdown("""
+    <style>
+    /* Sidebar cinza claro, texto preto */
+    [data-testid="stSidebar"] {
+        background-color: #DCDCDC !important;
+        color: #222 !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #222 !important;
+    }
+    /* Inputs, selects, botões: fundo branco, texto preto */
+    input, select, textarea, button, .stButton>button, label[data-testid="stMarkdownContainer"] {
+        background-color: #fff !important;
+        color: #222 !important;
+        border: 1px solid #ccc !important;
+    }
+    /* Selectbox de hora (filtro) - garantir fundo branco e texto preto */
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #fff !important;
+        color: #222 !important;
+    }
+    .stSelectbox div[data-baseweb="select"] input {
+        background-color: #fff !important;
+        color: #222 !important;
+    }
+    /* Checkboxes transparentes, texto preto */
+    .stCheckbox>div>div>input[type="checkbox"] {
+        background-color: transparent !important;
+    }
+    .stCheckbox>label, .stCheckbox label, label[data-testid="stMarkdownContainer"] {
+        color: #222 !important;
+    }
+    /* Área principal branca, texto preto */
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #fff !important;
+        color: #111 !important;
+    }
+    [data-testid="stAppViewContainer"] * {
+        color: #111 !important;
+    }
+    /* Estilo do ID do carregador ao lado do título (fundo transparente) */
+    .cp-id {
+        background: transparent !important;
+        color: #111 !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        padding: 2px 6px;
+        border: none !important;
+        border-radius: 4px;
+    }
+    /* Terminal de log: tema escuro, altura fixa, sem redimensionar */
+    .stTextArea textarea {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        background-color: #fff !important;
+        color: #111 !important;
+        border: 1px solid #ccc !important;
+        resize: none !important;
+    }
+    /* Viewer customizado para log com altura fixa e rolagem */
+    .log-viewer {
+        max-height: 550px;
+        overflow: auto;
+        background-color: #1e1e1e;
+        color: #e8e8e8 !important;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 10px 12px;
+        white-space: pre-wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    .log-viewer .log-time { color: #9cdcfe !important; }
+    .log-viewer .log-level.INFO { color: #6A9955 !important; }
+    .log-viewer .log-level.ERROR { color: #f44747 !important; }
+    .log-viewer .log-level.WARN { color: #dcdcaa !important; }
+    .log-viewer .log-level.DEBUG { color: #c586c0 !important; }
+    .log-viewer .log-source { color: #569CD6 !important; }
+    .log-viewer .log-key { color: #9cdcfe !important; }
+    .log-viewer .log-number { color: #ffa500 !important; }
+    .log-viewer .log-string { color: #ce9178 !important; }
     
-    if not all_dfs:
-        st.warning("Nenhum dado com timestamp válido foi encontrado nos logs.")
-        st.stop()
-        
-    # Pega o range de datas de TODOS os eventos combinados
-    df_all_times = pd.concat([df['timestamp'] for df in all_dfs])
-    min_date = df_all_times.min().date()
-    max_date = df_all_times.max().date()
-    
-    # Adiciona potencia_kW ao df_site_raw (mantido)
-    if not df_site_raw.empty:
-        df_site_raw['potencia_kW'] = df_site_raw['potencia_W'] / 1000.0
+    /* Centralizar o título principal (st.title) */
+    .block-container h1 {
+        text-align: center !important;
+        margin-top: 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ...restante do processamento, gráfico principal, e só depois as caixas de seleção...
     # --- FIM DA CORREÇÃO 1 ---
 
+
+    # Título principal (centralizado via CSS)
+    st.title("Dashboard Interativo de Potência dos Carregadores ⚡")
 
     # --- Layout da UI (Sidebar) (IDÊNTICO) ---
     try:
@@ -388,9 +413,25 @@ def build_dashboard():
         st.sidebar.error(f"Erro ao carregar logo: {e}")
         
     st.sidebar.header("Filtros de Data e Hora")
+    # Determina min_date / max_date com fallback para timestamps do parser quando df_power_raw está vazio
+    try:
+        if not df_power_raw.empty:
+            min_date = df_power_raw["date"].min()
+            max_date = df_power_raw["date"].max()
+        elif 'all_times' in locals() and all_times:
+            min_date = all_times[0].date()
+            max_date = all_times[-1].date()
+        else:
+            min_date = datetime.today().date()
+            max_date = min_date
+    except Exception:
+        # Em caso de qualquer problema, usa hoje como fallback seguro
+        min_date = datetime.today().date()
+        max_date = min_date
+
     selected_date = st.sidebar.date_input(
         "Filtrar por Dia",
-        value=max_date, 
+        value=max_date,
         min_value=min_date,
         max_value=max_date
     )
@@ -411,6 +452,7 @@ def build_dashboard():
     for display_name, serial in display_options.items():
         if st.sidebar.checkbox(display_name, value=True, key=serial):
             selected_serials.append(serial)
+
 
 
     # --- Filtrar o DataFrame (COM A LÓGICA DE SEGURANÇA DA CORREÇÃO 1) ---
@@ -602,26 +644,209 @@ def build_dashboard():
         hovermode="x unified"
     )
     st.plotly_chart(fig, use_container_width=True, theme=None)
-
-
     # --- Caixas de seleção abaixo do gráfico ---
-    # Caixas de seleção abaixo do gráfico (declaradas após todas variáveis)
     st.markdown("<br>", unsafe_allow_html=True)
-    col_opts = st.columns([1,1])
-    show_raw = col_opts[0].checkbox("Mostrar dados brutos extraídos do log", value=False, key="show_raw_checkbox")
-    show_disconnects = col_opts[1].checkbox("Mostrar Quant. de Desconexão", value=False, key="show_disconnects_checkbox")
+    col_opts = st.columns([1,1,1,2])
+    show_raw = col_opts[0].checkbox("Mostrar dados brutos extraídos do log (tabela)", value=False, key="show_raw_checkbox_tabela_final")
+    show_disconnects = col_opts[1].checkbox("Mostrar Quant. de Desconexão", value=False, key="show_disconnects_checkbox_final")
+    show_soc_power = col_opts[2].checkbox("Mostrar SoC e Potência Entregue", value=False, key="show_soc_power_checkbox_final")
+    show_raw_log = col_opts[3].checkbox("Mostrar log bruto por carregador (terminal)", value=False, key="show_raw_log_checkbox_terminal_final")
+
     if show_raw:
         st.subheader("Dados Extraídos (Processados para Plotagem)")
-        st.dataframe(df_min)
+        if not df_min.empty:
+            st.dataframe(df_min)
+        else:
+            st.info("Nenhum dado encontrado para os filtros selecionados.")
+
     if show_disconnects:
-        disconnects = get_disconnects("external_data/logs_combinados_cronologicamente1.log")
+        disconnects = get_disconnects(log_path)
+        all_known = set(list(CHARGER_MAX_POWER.keys())) | set(disconnects.keys())
         rows = []
-        for cp_id, days in disconnects.items():
-            count = days.get(selected_date, 0)
-            rows.append({"Carregador": cp_id, "Desconexões": count})
+        for cp_id in sorted(all_known):
+            info = disconnects.get(cp_id, {'local': {}, 'external': {}})
+            local_days = info.get('local', {})
+            ext_days = info.get('external', {})
+            local_count_day = local_days.get(selected_date, 0)
+            ext_count_day = ext_days.get(selected_date, 0)
+            total_local = sum(local_days.values()) if local_days else 0
+            total_external = sum(ext_days.values()) if ext_days else 0
+            days_local_list = ", ".join(sorted(d.isoformat() for d in local_days.keys())) if local_days else "-"
+            days_ext_list = ", ".join(sorted(d.isoformat() for d in ext_days.keys())) if ext_days else "-"
+            rows.append({
+                "Carregador": cp_id,
+                "Desconexões Locais (dia selecionado)": local_count_day,
+                "Desconexões Externas (dia selecionado)": ext_count_day,
+                "Total desconexões locais (log)": total_local,
+                "Total desconexões externas (log)": total_external,
+                "Dias com desconexões (local)": days_local_list,
+                "Dias com desconexões (externo)": days_ext_list
+            })
         df_disc = pd.DataFrame(rows)
-        st.markdown("## Quantidade de Desconexões por Carregador")
+        st.markdown("## Quantidade de Desconexões por Carregador (Local e Externa)")
         st.dataframe(df_disc)
+        missing_today = [r["Carregador"] for r in rows if (r["Desconexões Locais (dia selecionado)"] == 0 and r["Desconexões Externas (dia selecionado)"] == 0)]
+        if len(missing_today) == len(rows):
+            st.info("Nenhuma desconexão registrada para os carregadores no dia selecionado. Tente selecionar uma data anterior/igual ao dia dos logs (ex.: 2025-11-05).")
+
+    if show_soc_power:
+        # Extrai SoC e potência entregue do log usando o timestamp do início da linha (horário local do log)
+        soc_re = re.compile(r'\[FROM CHARGER ([^]]+)\]:.*MeterValues.*?"sampledValue":\[(.*?)\]\}\]\}\]', re.DOTALL)
+        sampled_item_re = re.compile(r'\{(.*?)\}')
+        soc_rows = []
+        with open(log_path, encoding="utf-8") as f:
+            for line in f:
+                m = soc_re.search(line)
+                if m:
+                    cp_id = m.group(1)
+                    sampled = m.group(2)
+                    soc = None
+                    power = None
+                    for item in sampled_item_re.findall(sampled):
+                        measurand_match = re.search(r'"measurand"\s*:\s*"([^"]+)"', item)
+                        value_match = re.search(r'"value"\s*:\s*"([\d.]+)"', item)
+                        if measurand_match and value_match:
+                            measurand = measurand_match.group(1)
+                            value = float(value_match.group(1))
+                            if measurand == "SoC":
+                                soc = value
+                            if measurand == "Power.Active.Import":
+                                power = value
+                    try:
+                        ts_str = line.split(" - ")[0]
+                        log_ts = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
+                    except Exception:
+                        continue
+                    if log_ts.date() == selected_date and (soc is not None or power is not None):
+                        soc_rows.append({
+                            "Carregador": cp_id,
+                            "Horário": log_ts,
+                            "SoC (%)": soc if soc is not None else "-",
+                            "Potência Entregue (W)": power if power is not None else "-"
+                        })
+        if soc_rows:
+            df_soc = pd.DataFrame(soc_rows)
+            st.markdown("## SoC (Bateria) e Potência Entregue por Carregador")
+            fig_soc = go.Figure()
+            max_gap_minutes = 10
+            color_map = {"SoC": "#1f77b4", "Potência": "#d62728"}
+            for cp_id in df_soc["Carregador"].unique():
+                df_cp = df_soc[df_soc["Carregador"] == cp_id].sort_values("Horário")
+                soc_vals = [v if v != "-" else None for v in df_cp["SoC (%)"]]
+                soc_times = df_cp["Horário"].tolist()
+                pot_vals = [v if v != "-" else None for v in df_cp["Potência Entregue (W)"]]
+                pot_times = df_cp["Horário"].tolist()
+                def split_sessions(times, vals):
+                    if not times:
+                        return []
+                    sessions = []
+                    session_x = [times[0]]
+                    session_y = [vals[0]]
+                    for i in range(1, len(times)):
+                        gap = (times[i] - times[i-1]).total_seconds() / 60.0
+                        if gap > max_gap_minutes or vals[i] is None:
+                            if len(session_x) > 1:
+                                sessions.append((session_x, session_y))
+                            session_x = []
+                            session_y = []
+                        session_x.append(times[i])
+                        session_y.append(vals[i])
+                    if len(session_x) > 1:
+                        sessions.append((session_x, session_y))
+                    return sessions
+                first_soc = True
+                for sess_x, sess_y in split_sessions(soc_times, soc_vals):
+                    fig_soc.add_trace(go.Scatter(x=sess_x, y=sess_y, mode="lines+markers",
+                                                 name=f"SoC (%) - {cp_id}" if first_soc else None,
+                                                 yaxis="y1", line=dict(color=color_map["SoC"])) )
+                    first_soc = False
+                first_pot = True
+                for sess_x, sess_y in split_sessions(pot_times, pot_vals):
+                    fig_soc.add_trace(go.Scatter(x=sess_x, y=sess_y, mode="lines+markers",
+                                                 name=f"Potência (W) - {cp_id}" if first_pot else None,
+                                                 yaxis="y2", line=dict(color=color_map["Potência"], dash="dot")))
+                    first_pot = False
+            fig_soc.update_layout(xaxis_title="Horário",
+                                   yaxis=dict(title="SoC (%)", side="left", showgrid=True, gridcolor="lightgray"),
+                                   yaxis2=dict(title="Potência Entregue (W)", overlaying="y", side="right", showgrid=False),
+                                   legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                                   plot_bgcolor="white", paper_bgcolor="white", font_color="black")
+            st.plotly_chart(fig_soc, use_container_width=True, theme=None)
+        else:
+            st.info("Nenhum dado de SoC ou potência entregue encontrado para o dia selecionado.")
+
+    if show_raw_log:
+        # Monta lista de carregadores a partir do parse_log (mais eficiente que reler todo o arquivo)
+        carregadores = set()
+        try:
+            # 'chargers' vem de parse_log acima e contém CP IDs conhecidos
+            carregadores.update(list(chargers.keys()))
+        except Exception:
+            pass
+        # Garante que os serials conhecidos também sejam mostrados
+        carregadores.update(list(CHARGER_MAX_POWER.keys()))
+        carregadores = sorted(list(carregadores))
+
+        if not carregadores:
+            st.info("Nenhum carregador encontrado no log para exibição bruta.")
+        else:
+            selected_cp = st.selectbox("Selecione o carregador para log bruto", carregadores, key="selectbox_log_cp_unique")
+            if selected_cp:
+                # Limite de linhas a renderizar (para evitar travamento do navegador)
+                # Tornamos isso configurável no sidebar para não precisar rebuildar o container Docker
+                try:
+                    MAX_LINES_RENDER = int(st.sidebar.number_input("Máx. linhas a renderizar no terminal de log", min_value=50, max_value=20000, value=2000, step=50, key="max_lines_render"))
+                except Exception:
+                    MAX_LINES_RENDER = 2000
+                @st.cache_data
+                def get_log_lines_for_cp(path, cp_id, max_lines):
+                    dq = deque(maxlen=max_lines)
+                    total = 0
+                    with open(path, encoding="utf-8") as f:
+                        for line in f:
+                            if cp_id in line:
+                                total += 1
+                                dq.append(line.rstrip())
+                    return list(dq), total
+
+                log_lines, total_matches = get_log_lines_for_cp(log_path, selected_cp, MAX_LINES_RENDER)
+                st.markdown(f"### Log bruto do carregador: <span class='cp-id'>{selected_cp}</span>", unsafe_allow_html=True)
+                if not log_lines:
+                    st.info("Nenhuma linha encontrada para este carregador.")
+                else:
+                    if total_matches > len(log_lines):
+                        st.info(f"Mostrando as últimas {len(log_lines)} de {total_matches} linhas correspondentes (truncado). Use o botão de download para obter o log completo para este carregador.")
+                    raw = "\n".join(log_lines)
+                    # Remove caracteres de controle ASCII (exceto tab/linhas)
+                    raw = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", raw)
+                    colored = escape(raw)
+                    # timestamps
+                    colored = re.sub(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})', r"<span class='log-time'>\1</span>", colored)
+                    # níveis
+                    colored = re.sub(r'\b(INFO|ERROR|WARN|DEBUG)\b', r"<span class='log-level \1'>\1</span>", colored)
+                    # fontes (ex.: [FROM CHARGER ...], [TO EXTERNAL SERVER ...], [STATE UPDATE ...])
+                    colored = re.sub(r'\[(?:FROM|TO|STATE UPDATE|CONTROL|GATEWAY CONSUME) [^\]]+\]', lambda m: f"<span class='log-source'>{m.group(0)}</span>", colored)
+                    # chaves JSON
+                    colored = re.sub(r'&quot;([^&"]+)&quot;(?=\s*:)', r'&quot;<span class="log-key">\1</span>&quot;', colored)
+                    # strings JSON (após os dois pontos)
+                    colored = re.sub(r'(?<=:\s)&quot;([^&]*)&quot;', r'&quot;<span class="log-string">\1</span>&quot;', colored)
+                    # números após ':' ou '=' seguidos de 'W' (destacar apenas valores em Watts)
+                    colored = re.sub(r'(?<=[:=]\s)(-?\d+(?:\.\d+)?)(?=\s*W\b)', r"<span class='log-number'>\1</span>", colored)
+                    st.markdown(f"<div class='log-viewer'>{colored}</div>", unsafe_allow_html=True)
+                    # Oferece download do conteúdo completo para este carregador (caso queira todo o histórico)
+                    if total_matches > 0:
+                        # botão de download com todas as linhas correspondentes (poderá ser custoso se for muito grande)
+                        @st.cache_data
+                        def get_full_log_for_cp(path, cp_id):
+                            lines = []
+                            with open(path, encoding="utf-8") as f:
+                                for line in f:
+                                    if cp_id in line:
+                                        lines.append(line.rstrip())
+                            return "\n".join(lines)
+
+                        full_text = get_full_log_for_cp(log_path, selected_cp)
+                        st.download_button(label="Download do log completo para este carregador", data=full_text, file_name=f"log_{selected_cp}.log", mime="text/plain")
 
 
 # --- LÓGICA DE EXECUÇÃO PRINCIPAL (O "PORTÃO") (IDÊNTICA) ---

@@ -1,0 +1,229 @@
+2025-10-28 15:13:39,003 - INFO - Carregadas 6 potências máximas aprendidas de 'learned_powers.json'.
+2025-10-28 15:13:39,006 - INFO - Iniciando o Gateway OCPP...
+2025-10-28 15:13:39,084 - INFO - server listening on 192.168.0.14:9000
+2025-10-28 15:13:39,085 - INFO - Servidor local escutando em ws://192.168.0.14:9000
+2025-10-28 15:13:39,085 - INFO - Iniciando loops de controle de demanda e medição...
+2025-10-28 15:13:42,167 - INFO - connection open
+2025-10-28 15:13:42,168 - INFO - [Local Server] Carregador '125020001122' detectado. Usando 7500W (carregado do arquivo) como máximo inicial.
+2025-10-28 15:13:42,168 - INFO - [Local Server] Iniciando conexão externa para '125020001122'...
+2025-10-28 15:13:42,461 - INFO - connection open
+2025-10-28 15:13:42,462 - INFO - [Local Server] Carregador '125020001148' detectado. Usando 7500W (carregado do arquivo) como máximo inicial.
+2025-10-28 15:13:42,462 - INFO - [Local Server] Iniciando conexão externa para '125020001148'...
+2025-10-28 15:13:42,913 - INFO - [FROM CHARGER 125020001122]: [2,"107236","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001122","chargePointSerialNumber":"125020001122","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:42,914 - WARNING - [BUFFERING 125020001122] Conexão externa indisponível. Armazenando mensagem no buffer.
+2025-10-28 15:13:43,075 - INFO - [FROM CHARGER 125020001148]: [2,"100748","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001148","chargePointSerialNumber":"125020001148","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:43,076 - WARNING - [BUFFERING 125020001148] Conexão externa indisponível. Armazenando mensagem no buffer.
+2025-10-28 15:13:43,126 - INFO - [External Client] Conectado ao servidor externo como '125020001122'
+2025-10-28 15:13:43,126 - INFO - [BUFFER FLUSH 125020001122] Conexão externa pronta. Enviando 1 mensagens pendentes (FIFO)...
+2025-10-28 15:13:43,127 - INFO - [BUFFER SEND 125020001122 via FLUSH]: [2,"107236","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001122","chargePointSerialNumber":"125020001122","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:43,128 - INFO - [BUFFER FLUSH 125020001122] Buffer limpo.
+2025-10-28 15:13:43,348 - INFO - [External Client] Conectado ao servidor externo como '125020001148'
+2025-10-28 15:13:43,348 - INFO - [BUFFER FLUSH 125020001148] Conexão externa pronta. Enviando 1 mensagens pendentes (FIFO)...
+2025-10-28 15:13:43,349 - INFO - [BUFFER SEND 125020001148 via FLUSH]: [2,"100748","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001148","chargePointSerialNumber":"125020001148","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:43,350 - INFO - [BUFFER FLUSH 125020001148] Buffer limpo.
+2025-10-28 15:13:43,372 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107236",{"status":"Accepted","currentTime":"2025-10-28T18:13:42.201Z","interval":60}]
+2025-10-28 15:13:43,374 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:43,599 - INFO - [FROM EXTERNAL SERVER FOR 125020001148]: [3,"100748",{"status":"Accepted","currentTime":"2025-10-28T18:13:42.428Z","interval":60}]
+2025-10-28 15:13:43,600 - INFO - [TO CHARGER 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:43,698 - INFO - connection open
+2025-10-28 15:13:43,698 - INFO - [Local Server] Carregador '0000324070001003' detectado. Usando 30000W (carregado do arquivo) como máximo inicial.
+2025-10-28 15:13:43,699 - INFO - [Local Server] Iniciando conexão externa para '0000324070001003'...
+2025-10-28 15:13:44,316 - INFO - [STATE UPDATE 125020001148]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:44,317 - INFO - [FROM CHARGER 125020001148]: [2,"100749","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:42Z"}]
+2025-10-28 15:13:44,317 - INFO - [TO EXTERNAL SERVER FOR 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:44,426 - INFO - [STATE UPDATE 125020001122]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:44,427 - INFO - [FROM CHARGER 125020001122]: [2,"107237","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:42Z"}]
+2025-10-28 15:13:44,428 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:44,561 - INFO - [FROM EXTERNAL SERVER FOR 125020001148]: [3,"100749",{}]
+2025-10-28 15:13:44,561 - INFO - [TO CHARGER 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:44,582 - INFO - [External Client] Conectado ao servidor externo como '0000324070001003'
+2025-10-28 15:13:44,672 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107237",{}]
+2025-10-28 15:13:44,673 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:44,730 - INFO - [STATE UPDATE 125020001122]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:44,731 - INFO - [FROM CHARGER 125020001122]: [2,"107238","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:42Z"}]
+2025-10-28 15:13:44,731 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:44,734 - INFO - [STATE UPDATE 125020001148]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:44,737 - INFO - [FROM CHARGER 125020001148]: [2,"100750","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:42Z"}]
+2025-10-28 15:13:44,739 - INFO - [TO EXTERNAL SERVER FOR 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:44,974 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107238",{}]
+2025-10-28 15:13:44,974 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:44,995 - INFO - [FROM EXTERNAL SERVER FOR 125020001148]: [3,"100750",{}]
+2025-10-28 15:13:44,996 - INFO - [TO CHARGER 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:45,065 - INFO - [FROM CHARGER 125020001148]: [2,"100751","Heartbeat",{}]
+2025-10-28 15:13:45,066 - INFO - [TO EXTERNAL SERVER FOR 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:45,137 - INFO - [Local Server] Conexão com o carregador '125020001122' fechada: Desconexão abrupta
+2025-10-28 15:13:45,138 - INFO - [Local Server] Cliente '125020001122' desconectado e removido.
+2025-10-28 15:13:45,138 - INFO - [Gateway] Propagando desconexão para o servidor externo de '125020001122'...
+2025-10-28 15:13:45,138 - INFO - [Gateway] Tarefa de conexão externa para '125020001122' foi cancelada.
+2025-10-28 15:13:45,139 - INFO - connection closed
+2025-10-28 15:13:45,291 - INFO - [FROM EXTERNAL SERVER FOR 125020001148]: [3,"100751",{"currentTime":"2025-10-28T18:13:44.122Z"}]
+2025-10-28 15:13:45,291 - INFO - [TO CHARGER 125020001148]: Mensagem encaminhada.
+2025-10-28 15:13:45,396 - INFO - [External Client] Tarefa para '125020001122' cancelada (carregador local desconectou). Encerrando.
+2025-10-28 15:13:45,397 - INFO - [External Client] Tarefa para '125020001122' finalizada.
+2025-10-28 15:13:46,569 - INFO - connection failed (400 Bad Request)
+2025-10-28 15:13:46,569 - INFO - connection closed
+2025-10-28 15:13:47,295 - INFO - [FROM CHARGER 0000324070001003]: [2,"108325","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC3401E","chargeBoxSerialNumber":"324070001003","chargePointSerialNumber":"324070001003","firmwareVersion":"V1.06","iccid":"NULL","imsi":"NULL","meterSerialNumber":"1232132132sn","meterType":"DC meter"}]
+2025-10-28 15:13:47,296 - INFO - [TO EXTERNAL SERVER FOR 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:47,539 - INFO - [FROM EXTERNAL SERVER FOR 0000324070001003]: [3,"108325",{"status":"Accepted","currentTime":"2025-10-28T18:13:46.369Z","interval":60}]
+2025-10-28 15:13:47,539 - INFO - [TO CHARGER 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:48,520 - INFO - [STATE UPDATE 0000324070001003]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:48,520 - INFO - [FROM CHARGER 0000324070001003]: [2,"108326","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Available","timestamp":"2025-10-28T18:13:47Z"}]
+2025-10-28 15:13:48,521 - INFO - [TO EXTERNAL SERVER FOR 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:48,763 - INFO - [FROM EXTERNAL SERVER FOR 0000324070001003]: [3,"108326",{}]
+2025-10-28 15:13:48,764 - INFO - [TO CHARGER 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:48,830 - INFO - [STATE UPDATE 0000324070001003]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:48,831 - INFO - [FROM CHARGER 0000324070001003]: [2,"108327","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","timestamp":"2025-10-28T18:13:47Z"}]
+2025-10-28 15:13:48,831 - INFO - [TO EXTERNAL SERVER FOR 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:49,071 - INFO - [FROM EXTERNAL SERVER FOR 0000324070001003]: [3,"108327",{}]
+2025-10-28 15:13:49,071 - INFO - [TO CHARGER 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:49,094 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 2
+2025-10-28 15:13:49,131 - INFO - [FROM CHARGER 0000324070001003]: [2,"108328","Heartbeat",{}]
+2025-10-28 15:13:49,132 - INFO - [TO EXTERNAL SERVER FOR 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:49,354 - INFO - [FROM EXTERNAL SERVER FOR 0000324070001003]: [3,"108328",{"currentTime":"2025-10-28T18:13:48.185Z"}]
+2025-10-28 15:13:49,354 - INFO - [TO CHARGER 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:13:57,324 - INFO - connection open
+2025-10-28 15:13:57,324 - INFO - [Local Server] Carregador '125020001122' (Max: 7500.0W) reconectado.
+2025-10-28 15:13:57,324 - INFO - [Local Server] O limite de potência anterior (7500W) foi mantido para '125020001122'.
+2025-10-28 15:13:57,325 - INFO - [Local Server] Iniciando conexão externa para '125020001122'...
+2025-10-28 15:13:57,972 - INFO - [FROM CHARGER 125020001122]: [2,"107240","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001122","chargePointSerialNumber":"125020001122","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:57,972 - WARNING - [BUFFERING 125020001122] Conexão externa indisponível. Armazenando mensagem no buffer.
+2025-10-28 15:13:58,217 - INFO - [External Client] Conectado ao servidor externo como '125020001122'
+2025-10-28 15:13:58,217 - INFO - [BUFFER FLUSH 125020001122] Conexão externa pronta. Enviando 1 mensagens pendentes (FIFO)...
+2025-10-28 15:13:58,218 - INFO - [BUFFER SEND 125020001122 via FLUSH]: [2,"107240","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001122","chargePointSerialNumber":"125020001122","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:13:58,219 - INFO - [BUFFER FLUSH 125020001122] Buffer limpo.
+2025-10-28 15:13:58,470 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107240",{"status":"Accepted","currentTime":"2025-10-28T18:13:57.300Z","interval":60}]
+2025-10-28 15:13:58,471 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:59,104 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 3
+2025-10-28 15:13:59,579 - INFO - [STATE UPDATE 125020001122]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:59,580 - INFO - [FROM CHARGER 125020001122]: [2,"107241","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:57Z"}]
+2025-10-28 15:13:59,581 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:59,820 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107241",{}]
+2025-10-28 15:13:59,821 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:13:59,886 - INFO - [STATE UPDATE 125020001122]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:13:59,886 - INFO - [FROM CHARGER 125020001122]: [2,"107242","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:13:57Z"}]
+2025-10-28 15:13:59,887 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:14:00,132 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107242",{}]
+2025-10-28 15:14:00,133 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:14:00,195 - INFO - [FROM CHARGER 125020001122]: [2,"107243","Heartbeat",{}]
+2025-10-28 15:14:00,195 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:14:00,420 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107243",{"currentTime":"2025-10-28T18:13:59.251Z"}]
+2025-10-28 15:14:00,421 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:14:01,424 - INFO - connection open
+2025-10-28 15:14:01,424 - INFO - [Local Server] Carregador '0000324070000979' detectado. Usando 30000W (carregado do arquivo) como máximo inicial.
+2025-10-28 15:14:01,424 - INFO - [Local Server] Iniciando conexão externa para '0000324070000979'...
+2025-10-28 15:14:02,310 - INFO - [External Client] Conectado ao servidor externo como '0000324070000979'
+2025-10-28 15:14:05,003 - INFO - [FROM CHARGER 0000324070000979]: [2,"113191","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC3401E","chargeBoxSerialNumber":"324070000979","chargePointSerialNumber":"324070000979","firmwareVersion":"V1.07","iccid":"NULL","imsi":"NULL","meterSerialNumber":"1232132132sn","meterType":"DC meter"}]
+2025-10-28 15:14:05,004 - INFO - [TO EXTERNAL SERVER FOR 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:05,245 - INFO - [FROM EXTERNAL SERVER FOR 0000324070000979]: [3,"113191",{"status":"Accepted","currentTime":"2025-10-28T18:14:04.075Z","interval":60}]
+2025-10-28 15:14:05,246 - INFO - [TO CHARGER 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:06,235 - INFO - [STATE UPDATE 0000324070000979]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:14:06,235 - INFO - [FROM CHARGER 0000324070000979]: [2,"113192","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Available","timestamp":"2025-10-28T18:14:05Z"}]
+2025-10-28 15:14:06,236 - INFO - [TO EXTERNAL SERVER FOR 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:06,465 - INFO - [STATE UPDATE 0000324070000979]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:14:06,466 - INFO - [FROM CHARGER 0000324070000979]: [2,"113193","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","timestamp":"2025-10-28T18:14:05Z"}]
+2025-10-28 15:14:06,466 - INFO - [TO EXTERNAL SERVER FOR 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:06,487 - INFO - [FROM EXTERNAL SERVER FOR 0000324070000979]: [3,"113192",{}]
+2025-10-28 15:14:06,488 - INFO - [TO CHARGER 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:06,726 - INFO - [FROM EXTERNAL SERVER FOR 0000324070000979]: [3,"113193",{}]
+2025-10-28 15:14:06,727 - INFO - [TO CHARGER 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:06,775 - INFO - [FROM CHARGER 0000324070000979]: [2,"113194","Heartbeat",{}]
+2025-10-28 15:14:06,777 - INFO - [TO EXTERNAL SERVER FOR 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:07,000 - INFO - [FROM EXTERNAL SERVER FOR 0000324070000979]: [3,"113194",{"currentTime":"2025-10-28T18:14:05.831Z"}]
+2025-10-28 15:14:07,001 - INFO - [TO CHARGER 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:14:09,106 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 4
+2025-10-28 15:14:19,111 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 4
+2025-10-28 15:14:29,127 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 4
+2025-10-28 15:14:39,140 - INFO - [CONTROL] Demanda: 0.00W / 53000.0W | Ativos: 0 | Espera: 4
+2025-10-28 15:14:39,934 - INFO - connection open
+2025-10-28 15:14:39,934 - INFO - [Local Server] Carregador '125020001113' detectado. Usando 7500W (carregado do arquivo) como máximo inicial.
+2025-10-28 15:14:39,935 - INFO - [Local Server] Iniciando conexão externa para '125020001113'...
+2025-10-28 15:14:40,645 - INFO - [FROM CHARGER 125020001113]: [2,"112160","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001113","chargePointSerialNumber":"125020001113","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:14:40,645 - WARNING - [BUFFERING 125020001113] Conexão externa indisponível. Armazenando mensagem no buffer.
+2025-10-28 15:14:40,827 - INFO - [External Client] Conectado ao servidor externo como '125020001113'
+2025-10-28 15:14:40,827 - INFO - [BUFFER FLUSH 125020001113] Conexão externa pronta. Enviando 1 mensagens pendentes (FIFO)...
+2025-10-28 15:14:40,828 - INFO - [BUFFER SEND 125020001113 via FLUSH]: [2,"112160","BootNotification",{"chargePointVendor":"SINO","chargePointModel":"PEVC2108E","chargeBoxSerialNumber":"125020001113","chargePointSerialNumber":"125020001113","firmwareVersion":"V4.01 0xB985","iccid":"WIFI","imsi":"WIFI","meterSerialNumber":"1232132132sn","meterType":"AC meter"}]
+2025-10-28 15:14:40,828 - INFO - [BUFFER FLUSH 125020001113] Buffer limpo.
+2025-10-28 15:14:41,069 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112160",{"status":"Accepted","currentTime":"2025-10-28T18:14:39.899Z","interval":60}]
+2025-10-28 15:14:41,070 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:42,202 - INFO - [STATE UPDATE 125020001113]: Status alterado de 'Available' para 'Available'
+2025-10-28 15:14:42,203 - INFO - [FROM CHARGER 125020001113]: [2,"112161","StatusNotification",{"connectorId":0,"errorCode":"NoError","status":"Available","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:14:39Z"}]
+2025-10-28 15:14:42,203 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:42,449 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112161",{}]
+2025-10-28 15:14:42,450 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:42,590 - INFO - [STATE UPDATE 125020001113]: Status alterado de 'Available' para 'Charging'
+2025-10-28 15:14:42,591 - INFO - [FROM CHARGER 125020001113]: [2,"112162","StatusNotification",{"connectorId":1,"errorCode":"NoError","status":"Charging","vendorId":"SINO","vendorErrorCode":"NULL","timestamp":"2025-10-28T18:14:39Z"}]
+2025-10-28 15:14:42,591 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:42,829 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112162",{}]
+2025-10-28 15:14:42,830 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:42,925 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6561.70W
+2025-10-28 15:14:42,925 - INFO - [FROM CHARGER 125020001113]: [2,"112163","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:13:53Z","sampledValue":[{"value":"206.57","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.78","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621592","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6561.7","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:42,926 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:43,203 - INFO - [FROM CHARGER 125020001113]: [2,"112164","Heartbeat",{}]
+2025-10-28 15:14:43,204 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:43,234 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112163",{}]
+2025-10-28 15:14:43,235 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:43,429 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112164",{"currentTime":"2025-10-28T18:14:42.260Z"}]
+2025-10-28 15:14:43,429 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:43,841 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6559.80W
+2025-10-28 15:14:43,841 - INFO - [FROM CHARGER 125020001113]: [2,"112165","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:03Z","sampledValue":[{"value":"206.71","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.75","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621612","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6559.8","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:43,842 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:44,148 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112165",{}]
+2025-10-28 15:14:44,148 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:45,246 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6566.20W
+2025-10-28 15:14:45,247 - INFO - [FROM CHARGER 125020001113]: [2,"112166","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:13Z","sampledValue":[{"value":"206.76","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.78","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621632","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6566.2","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:45,248 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:45,253 - INFO - [FROM CHARGER 125020001148]: [2,"100752","Heartbeat",{}]
+2025-10-28 15:14:45,254 - INFO - [TO EXTERNAL SERVER FOR 125020001148]: Mensagem encaminhada.
+2025-10-28 15:14:45,476 - INFO - [FROM EXTERNAL SERVER FOR 125020001148]: [3,"100752",{"currentTime":"2025-10-28T18:14:44.307Z"}]
+2025-10-28 15:14:45,477 - INFO - [TO CHARGER 125020001148]: Mensagem encaminhada.
+2025-10-28 15:14:45,618 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112166",{}]
+2025-10-28 15:14:45,618 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:46,093 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6565.60W
+2025-10-28 15:14:46,093 - INFO - [FROM CHARGER 125020001113]: [2,"112167","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:23Z","sampledValue":[{"value":"206.70","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.78","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621647","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6565.6","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:46,094 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:46,402 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112167",{}]
+2025-10-28 15:14:46,403 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:47,121 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6545.20W
+2025-10-28 15:14:47,121 - INFO - [FROM CHARGER 125020001113]: [2,"112168","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:34Z","sampledValue":[{"value":"206.43","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.72","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621667","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6545.2","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:47,122 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:47,428 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112168",{}]
+2025-10-28 15:14:47,428 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:48,041 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6561.70W
+2025-10-28 15:14:48,042 - INFO - [FROM CHARGER 125020001113]: [2,"112169","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:45Z","sampledValue":[{"value":"206.61","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.78","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621687","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6561.7","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:48,043 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:48,351 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112169",{}]
+2025-10-28 15:14:48,352 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:49,154 - INFO - [CONTROL] Demanda: 6561.70W / 53000.0W | Ativos: 1 | Espera: 4
+2025-10-28 15:14:49,244 - INFO - [FROM CHARGER 0000324070001003]: [2,"108329","Heartbeat",{}]
+2025-10-28 15:14:49,244 - INFO - [TO EXTERNAL SERVER FOR 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:14:49,470 - INFO - [FROM EXTERNAL SERVER FOR 0000324070001003]: [3,"108329",{"currentTime":"2025-10-28T18:14:48.301Z"}]
+2025-10-28 15:14:49,470 - INFO - [TO CHARGER 0000324070001003]: Mensagem encaminhada.
+2025-10-28 15:14:58,975 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6563.00W
+2025-10-28 15:14:58,976 - INFO - [FROM CHARGER 125020001113]: [2,"112170","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:14:56Z","sampledValue":[{"value":"206.55","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.79","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621707","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6563.0","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:14:58,976 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:14:59,160 - INFO - [CONTROL] Demanda: 6563.00W / 53000.0W | Ativos: 1 | Espera: 4
+2025-10-28 15:14:59,287 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112170",{}]
+2025-10-28 15:14:59,287 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:15:00,311 - INFO - [FROM CHARGER 125020001122]: [2,"107244","Heartbeat",{}]
+2025-10-28 15:15:00,311 - INFO - [TO EXTERNAL SERVER FOR 125020001122]: Mensagem encaminhada.
+2025-10-28 15:15:00,536 - INFO - [FROM EXTERNAL SERVER FOR 125020001122]: [3,"107244",{"currentTime":"2025-10-28T18:14:59.368Z"}]
+2025-10-28 15:15:00,537 - INFO - [TO CHARGER 125020001122]: Mensagem encaminhada.
+2025-10-28 15:15:06,855 - INFO - [FROM CHARGER 0000324070000979]: [2,"113195","Heartbeat",{}]
+2025-10-28 15:15:06,855 - INFO - [TO EXTERNAL SERVER FOR 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:15:07,081 - INFO - [FROM EXTERNAL SERVER FOR 0000324070000979]: [3,"113195",{"currentTime":"2025-10-28T18:15:05.912Z"}]
+2025-10-28 15:15:07,082 - INFO - [TO CHARGER 0000324070000979]: Mensagem encaminhada.
+2025-10-28 15:15:09,168 - INFO - [CONTROL] Demanda: 6563.00W / 53000.0W | Ativos: 1 | Espera: 4
+2025-10-28 15:15:09,221 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6560.50W
+2025-10-28 15:15:09,222 - INFO - [FROM CHARGER 125020001113]: [2,"112171","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:15:06Z","sampledValue":[{"value":"206.35","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.81","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621727","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6560.5","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:15:09,223 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:15:09,561 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112171",{}]
+2025-10-28 15:15:09,562 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:15:19,176 - INFO - [CONTROL] Demanda: 6560.50W / 53000.0W | Ativos: 1 | Espera: 4
+2025-10-28 15:15:20,080 - INFO - [STATE UPDATE 125020001113]: Potência atual: 6549.60W
+2025-10-28 15:15:20,081 - INFO - [FROM CHARGER 125020001113]: [2,"112172","MeterValues",{"connectorId":1,"transactionId":690225,"meterValue":[{"timestamp":"2025-10-28T18:15:17Z","sampledValue":[{"value":"206.43","context":"Sample.Periodic","format":"Raw","measurand":"Voltage","phase":"L1","location":"Cable","unit":"V"},{"value":"31.75","context":"Sample.Periodic","format":"Raw","measurand":"Current.Import","phase":"L1","location":"Cable","unit":"A"},{"value":"1621747","context":"Sample.Periodic","format":"Raw","measurand":"Energy.Active.Import.Register","phase":"L1","location":"Body","unit":"Wh"},{"value":"6549.6","context":"Sample.Periodic","format":"Raw","measurand":"Power.Active.Import","phase":"L1","location":"Cable","unit":"W"},{"value":"32","context":"Sample.Periodic","format":"Raw","measurand":"Current.Offered","phase":"L1","location":"Cable","unit":"A"}]}]}]
+2025-10-28 15:15:20,082 - INFO - [TO EXTERNAL SERVER FOR 125020001113]: Mensagem encaminhada.
+2025-10-28 15:15:20,397 - INFO - [FROM EXTERNAL SERVER FOR 125020001113]: [3,"112172",{}]
+2025-10-28 15:15:20,398 - INFO - [TO CHARGER 125020001113]: Mensagem encaminhada.
+2025-10-28 15:15:28,167 - INFO - Gateway desligando... Removendo limitações de potência.
+2025-10-28 15:15:28,168 - INFO - Nenhum carregador conectado para liberar ou loop não está rodando.
+2025-10-28 15:15:28,170 - INFO - Gateway desligado.
